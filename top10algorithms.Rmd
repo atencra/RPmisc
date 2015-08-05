@@ -1,0 +1,233 @@
+---
+title: "Top 10 Data Mining Algorithms"
+author: "CAA"
+date: "August 3, 2015"
+output: html_document
+---
+
+Raymond Li has a nice, simple over view of the top 10 data mining algorithms. The top 10 algorithms come from a fairly famous paper that surveyed the algorithms that researchers considered to be the most influential. The paper was subsequently published as a book.
+
+Li goes through the algorithms by giving a simple usage of each in the R language. Here I'll just go through Li's presentation.
+
+The web site containing the descriptions is: 
+http://rayli.net/blog/data/top-10-data-mining-algorithms-in-plain-r/
+
+
+# 1. C5.0
+```{r, warning=FALSE,message=FALSE}
+library(C50)
+library(printr)
+```
+
+Take a sample of 100 rows from the Iris dataset:
+```{r}
+train.indices = sample(1:nrow(iris), 100)
+iris.train = iris[train.indices,]
+iris.test = iris[-train.indices,]
+```
+
+
+Train a model using training data:
+```{r}
+model = C5.0(Species ~ ., data = iris.train)
+```
+
+
+Test the model using the test data:
+```{r}
+results = predict(object=model, newdata=iris.test, type="class")
+```
+
+Evaluate performance using a confusion matrix:
+```{r}
+table(results, iris.test$Species)
+```
+
+
+# 2. k-means
+
+```{r, warning=FALSE,message=FALSE}
+library(stats)
+
+# Remove Species column, use 3 clusters:
+model = kmeans(x=subset(iris,select=-Species), centers=3)
+
+table(model$cluster, iris$Species)
+```
+
+
+# 3. Support Vector Machines
+
+```{r, warning=FALSE,message=FALSE}
+library(e1071)
+
+train.indices = sample(1:nrow(iris),100)
+iris.train = iris[train.indices,]
+iris.test = iris[-train.indices,]
+
+model = svm(Species ~ ., data=iris.train)
+
+results = predict(object=model, newdata=iris.test,type="class")
+
+table(results, iris.test$Species)
+```
+
+
+# 4. Apriori
+```{r, warning=FALSE,message=FALSE}
+library(arules)
+data("Adult")
+
+# We want at least 40% of records to contain the related items
+# Confidence is conditional probability
+rules = apriori(Adult,
+         parameter=list(support=0.4,confidence=0.7),
+         appearance=list(rhs=c("race=White","sex=Male"),default="lhs"))
+```
+
+
+Check out the association rules:
+```{r}
+rules.sorted = sort(rules,by="lift")
+top5.rules = head(rules.sorted,5)
+as(top5.rules,"data.frame")
+```
+
+
+
+# 5. Expectation-Maximization (EM)
+```{r, warning=FALSE,message=FALSE}
+library(mclust)
+
+# Train model
+model = Mclust(subset(iris,select=-Species))
+
+
+# Evaluate with confusion matrix
+table(model$classification, iris$Species)
+
+
+# Plot the model
+plot(model)
+```
+
+
+# 6. PageRank
+```{r, warning=FALSE,message=FALSE}
+library(igraph)
+library(dplyr)
+
+# Generate random graph
+g = random.graph.game(n=10,p.or.m=1/4,directed=TRUE)
+
+
+# Plot random graph
+plot(g)
+
+
+# Apply PageRank
+pr = page.rank(g)$vector
+
+
+# View the PageRanks
+df = data.frame(Object=1:10, PageRank=pr)
+arrange(df, desc(PageRank))
+```
+
+
+# 7. AdaBoost
+```{r, warning=FALSE,message=FALSE}
+library(adabag)
+
+# Get Training and Test Sets
+train.indices = sample(1:nrow(iris),100)
+iris.train = iris[train.indices,]
+iris.test = iris[-train.indices,]
+
+# Train the model
+model = boosting(Species ~ ., data=iris.train)
+
+
+# Test the model
+results = predict(object=model, newdata=iris.test, type="class")
+
+
+# Output confusion matrix
+results$confusion
+```
+
+
+# 8. kNN
+```{r, warning=FALSE,message=FALSE}
+library(class)
+
+# Get Training and Test Sets
+train.indices = sample(1:nrow(iris),100)
+iris.train = iris[train.indices,]
+iris.test = iris[-train.indices,]
+
+
+# Initialize with training data. Evaluate with test data.
+results = knn(train=subset(iris.train,select=-Species),
+              test=subset(iris.test,select=-Species),
+              cl=iris.train$Species)
+
+
+# Examine confusion matrix:
+table(results,iris.test$Species)
+```
+
+
+# 9. Naive Bayes
+```{r, warning=FALSE,message=FALSE}
+library(e1071)
+
+# Get Training and Test Sets
+train.indices = sample(1:nrow(iris),100)
+iris.train = iris[train.indices,]
+iris.test = iris[-train.indices,]
+
+# Train the model
+model = naiveBayes(x=subset(iris.train,select=-Species),
+                   y=iris.train$Species)
+
+
+# Evaluate model
+results = predict(object=model,newdata=iris.test,type="class")
+
+
+# Examine confusion matrix
+table(results,iris.test$Species)
+```
+
+
+# 10. CART
+```{r, warning=FALSE,message=FALSE}
+library(rpart)
+
+# Get Training and Test Sets
+train.indices = sample(1:nrow(iris),100)
+iris.train = iris[train.indices,]
+iris.test = iris[-train.indices,]
+
+# Train the model
+model = rpart(Species ~., data=iris.train)
+
+
+# Evaluate the model
+results = predict(object=model, newdata=iris.test, type="class")
+
+# Examine confusion matrix
+table(results, iris.test$Species)
+```
+
+
+
+
+
+
+
+
+
+
+
